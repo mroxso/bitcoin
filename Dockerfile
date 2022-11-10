@@ -32,7 +32,8 @@ WORKDIR /src
 #RUN git clone https://github.com/mroxso/bitcoin
 
 # Git clone a specific tag
-RUN git clone ${git_url} --depth 1 --branch ${checkout} /src
+RUN git clone ${git_url} --depth 1 /src
+RUN git checkout -b ${checkout}
 
 RUN ./autogen.sh && ./configure --without-gui && make -j $(nproc) && make install
 
