@@ -1,9 +1,6 @@
 # BUILDER
 FROM ubuntu:latest as builder
 
-ARG checkout="master"
-ARG git_url="https://github.com/mroxso/bitcoin"
-
 RUN apt update && apt install -y \
     build-essential \
     cmake \
@@ -27,12 +24,9 @@ RUN apt update && apt install -y \
     libzmq3-dev \
     systemtap-sdt-dev
 
+COPY . /src
+
 WORKDIR /src
-
-#RUN git clone https://github.com/mroxso/bitcoin
-
-# Git clone a specific tag
-RUN git clone ${git_url} --depth 1 --branch ${checkout} /src
 
 RUN ./autogen.sh && ./configure --without-gui && make -j $(nproc) && make install
 
