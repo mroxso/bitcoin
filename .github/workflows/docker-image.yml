@@ -14,6 +14,10 @@ on:
     branches: ['release']
     
   workflow_dispatch:
+    inputs:
+      checkout:
+        type: string
+        description: Branch to Checkout
 
 env:
   REGISTRY: ghcr.io
@@ -51,5 +55,7 @@ jobs:
         with:
           context: .
           push: true
+          build-args: |
+            checkout="${{ github.event.inputs.checkout }}"
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
