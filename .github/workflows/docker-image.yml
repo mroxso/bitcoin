@@ -18,6 +18,7 @@ on:
       checkout:
         type: string
         description: Branch to Checkout
+        default: master
 
 env:
   REGISTRY: ghcr.io
