@@ -15,9 +15,7 @@ RUN apt update && apt install -y \
     automake \
     pkg-config \
     bsdmainutils \
-    python3
-
-RUN apt install -y \
+    python3 \
     libevent-dev \
     libboost-dev \
     libsqlite3-dev \
@@ -34,6 +32,13 @@ RUN ./autogen.sh && ./configure --without-gui && make -j $(nproc) && make instal
 
 # # FINAL IMAGE
 # FROM ubuntu:latest as final
+
+# RUN apt update && apt upgrade -y
+# RUN apt install -y \
+#     libminiupnpc-dev \
+#     libnatpmp-dev \
+#     libzmq3-dev \
+#     systemtap-sdt-dev
 
 # COPY --from=builder /usr/local/bin/bitcoind /usr/local/bin/
 # COPY --from=builder /usr/local/bin/bitcoin-cli /usr/local/bin/
