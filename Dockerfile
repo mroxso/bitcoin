@@ -30,17 +30,18 @@ WORKDIR /src
 
 RUN ./autogen.sh && ./configure --without-gui && make -j $(nproc) && make install
 
-# # FINAL IMAGE
-# FROM ubuntu:latest as final
+# FINAL IMAGE
+FROM ubuntu:latest as final
 
-# RUN apt update && apt upgrade -y
-# RUN apt install -y \
-#     libminiupnpc-dev \
-#     libnatpmp-dev \
-#     libzmq3-dev \
-#     systemtap-sdt-dev
+RUN apt update && apt upgrade -y
+RUN apt install -y \
+    libminiupnpc-dev \
+    libnatpmp-dev \
+    libzmq3-dev \
+    systemtap-sdt-dev \
+    libevent-dev
 
-# COPY --from=builder /usr/local/bin/bitcoind /usr/local/bin/
-# COPY --from=builder /usr/local/bin/bitcoin-cli /usr/local/bin/
+COPY --from=builder /usr/local/bin/bitcoind /usr/local/bin/
+COPY --from=builder /usr/local/bin/bitcoin-cli /usr/local/bin/
 
 CMD ["bitcoind"]
