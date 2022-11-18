@@ -33,7 +33,7 @@ WORKDIR /src
 
 # Git clone a specific tag
 RUN git clone ${git_url} --depth 1 /src
-RUN git checkout -b ${checkout}
+RUN git checkout tags/${checkout} -b ${checkout}
 
 RUN ./autogen.sh && ./configure --without-gui && make -j $(nproc) && make install
 
