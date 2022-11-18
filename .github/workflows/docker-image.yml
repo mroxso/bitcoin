@@ -67,7 +67,7 @@ jobs:
           push: true
           # file: dev.Dockerfile
           build-args: |
-            checkout="${{ github.event.inputs.checkout }}"
+            checkout=${{ github.event.inputs.checkout }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: |
