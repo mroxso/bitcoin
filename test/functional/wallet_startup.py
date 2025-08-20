@@ -13,13 +13,9 @@ from test_framework.util import (
 
 
 class WalletStartupTest(BitcoinTestFramework):
-    def add_options(self, parser):
-        self.add_wallet_options(parser)
-
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 1
-        self.supports_cli = True
 
     def skip_test_if_missing_module(self):
         self.skip_if_no_wallet()
@@ -58,4 +54,4 @@ class WalletStartupTest(BitcoinTestFramework):
         assert_equal(set(self.nodes[0].listwallets()), set(('w2', 'w3')))
 
 if __name__ == '__main__':
-    WalletStartupTest().main()
+    WalletStartupTest(__file__).main()

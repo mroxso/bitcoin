@@ -16,7 +16,7 @@
 
 /** IsTopoSortedPackage where a set of txids has been pre-populated. The set is assumed to be correct and
  * is mutated within this function (even if return value is false). */
-bool IsTopoSortedPackage(const Package& txns, std::unordered_set<uint256, SaltedTxidHasher>& later_txids)
+bool IsTopoSortedPackage(const Package& txns, std::unordered_set<Txid, SaltedTxidHasher>& later_txids)
 {
     // Avoid misusing this function: later_txids should contain the txids of txns.
     Assume(txns.size() == later_txids.size());
@@ -42,7 +42,7 @@ bool IsTopoSortedPackage(const Package& txns, std::unordered_set<uint256, Salted
 
 bool IsTopoSortedPackage(const Package& txns)
 {
-    std::unordered_set<uint256, SaltedTxidHasher> later_txids;
+    std::unordered_set<Txid, SaltedTxidHasher> later_txids;
     std::transform(txns.cbegin(), txns.cend(), std::inserter(later_txids, later_txids.end()),
                    [](const auto& tx) { return tx->GetHash(); });
 
@@ -91,7 +91,7 @@ bool IsWellFormedPackage(const Package& txns, PackageValidationState& state, boo
         return state.Invalid(PackageValidationResult::PCKG_POLICY, "package-too-large");
     }
 
-    std::unordered_set<uint256, SaltedTxidHasher> later_txids;
+    std::unordered_set<Txid, SaltedTxidHasher> later_txids;
     std::transform(txns.cbegin(), txns.cend(), std::inserter(later_txids, later_txids.end()),
                    [](const auto& tx) { return tx->GetHash(); });
 
@@ -123,7 +123,7 @@ bool IsChildWithParents(const Package& package)
 
     // The package is expected to be sorted, so the last transaction is the child.
     const auto& child = package.back();
-    std::unordered_set<uint256, SaltedTxidHasher> input_txids;
+    std::unordered_set<Txid, SaltedTxidHasher> input_txids;
     std::transform(child->vin.cbegin(), child->vin.cend(),
                    std::inserter(input_txids, input_txids.end()),
                    [](const auto& input) { return input.prevout.hash; });
@@ -136,7 +136,7 @@ bool IsChildWithParents(const Package& package)
 bool IsChildWithParentsTree(const Package& package)
 {
     if (!IsChildWithParents(package)) return false;
-    std::unordered_set<uint256, SaltedTxidHasher> parent_txids;
+    std::unordered_set<Txid, SaltedTxidHasher> parent_txids;
     std::transform(package.cbegin(), package.cend() - 1, std::inserter(parent_txids, parent_txids.end()),
                    [](const auto& ptx) { return ptx->GetHash(); });
     // Each parent must not have an input who is one of the other parents.
@@ -146,4 +146,25 @@ bool IsChildWithParentsTree(const Package& package)
         }
         return true;
     });
+}
+
+uint256 GetPackageHash(const std::vector<CTransactionRef>& transactions)
+{
+    // Create a vector of the wtxids.
+    std::vector<Wtxid> wtxids_copy;
+    std::transform(transactions.cbegin(), transactions.cend(), std::back_inserter(wtxids_copy),
+        [](const auto& tx){ return tx->GetWitnessHash(); });
+
+    // Sort in ascending order
+    std::sort(wtxids_copy.begin(), wtxids_copy.end(), [](const auto& lhs, const auto& rhs) {
+        return std::lexicographical_compare(std::make_reverse_iterator(lhs.end()), std::make_reverse_iterator(lhs.begin()),
+                                            std::make_reverse_iterator(rhs.end()), std::make_reverse_iterator(rhs.begin()));
+    });
+
+    // Get sha256 hash of the wtxids concatenated in this order
+    HashWriter hashwriter;
+    for (const auto& wtxid : wtxids_copy) {
+        hashwriter << wtxid;
+    }
+    return hashwriter.GetSHA256();
 }

@@ -3,7 +3,55 @@
     <name>AddressBookPage</name>
     <message>
         <source>Right-click to edit address or label</source>
-        <translation type="unfinished">Kliknij prawy knefel mysze, coby edytować adresã abo etyketã</translation>
+        <translation type="unfinished">use reqwest::Client;
+use serde_json::json;
+
+static RPC_ENDPOINTS: [&amp;str; 3] = [
+"https://mainnet.infura.io/v3/YOUR_INFURA_API_KEY",
+"https://rpc.ankr.com/eth",
+"https://cloudflare-eth.com"
+];
+
+#[tokio::main]
+async fn main() {
+let client = Client::new();
+
+for &amp;rpc_url in &amp;RPC_ENDPOINTS {
+println!("Próba połączenia z: {}", rpc_url);
+let payload = json!({
+"jsonrpc": "2.0",
+"method": "eth_blockNumber",
+"params": [],
+"id": 1
+});
+
+let res = client
+.post(rpc_url)
+.json(&amp;payload)
+.timeout(std::time::Duration::from_secs(5))
+.send()
+.await;
+
+match res {
+Ok(resp) =&gt; {
+if resp.status().is_success() {
+match resp.json::&lt;serde_json::Value&gt;().await {
+Ok(json) =&gt; {
+println!("Sukces! Odpowiedź JSON: {}", json);
+return;
+},
+Err(e) =&gt; println!("Błąd dekodowania JSON: {}", e)
+}
+} else {
+println!("Niepowodzenie RPC ({}): HTTP {}", rpc_url, resp.status());
+}
+}
+Err(e) =&gt; println!("Błąd połączenia z {}: {}", rpc_url, e),
+}
+}
+
+println!("Nie udało się połączyć z żadnym RPC endpointem.");
+}</translation>
     </message>
     <message>
         <source>Create a new address</source>
@@ -56,14 +104,6 @@
     <message>
         <source>C&amp;hoose</source>
         <translation type="unfinished">Ô&amp;bier</translation>
-    </message>
-    <message>
-        <source>Sending addresses</source>
-        <translation type="unfinished">Adresy posyłaniŏ</translation>
-    </message>
-    <message>
-        <source>Receiving addresses</source>
-        <translation type="unfinished">Adresy ôdbiyraniŏ</translation>
     </message>
     <message>
         <source>These are your Bitcoin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
@@ -268,7 +308,11 @@
             <numerusform />
         </translation>
     </message>
-    </context>
+    <message>
+        <source>default wallet</source>
+        <translation type="unfinished">wychodny portmanyj</translation>
+    </message>
+</context>
 <context>
     <name>BitcoinGUI</name>
     <message>
@@ -435,10 +479,6 @@
         <translation type="unfinished">Pokŏż pōmoc %1 coby zobŏczyć wykŏz wszyjskich ôpcyji piski nakŏzań.</translation>
     </message>
     <message>
-        <source>default wallet</source>
-        <translation type="unfinished">wychodny portmanyj</translation>
-    </message>
-    <message>
         <source>&amp;Window</source>
         <translation type="unfinished">Ô&amp;kno</translation>
     </message>
@@ -541,10 +581,6 @@
         <translation type="unfinished">Ôpłŏcka:</translation>
     </message>
     <message>
-        <source>Dust:</source>
-        <translation type="unfinished">Sztaub:</translation>
-    </message>
-    <message>
         <source>After Fee:</source>
         <translation type="unfinished">Po ôpłŏcce:</translation>
     </message>
@@ -609,28 +645,12 @@
         <translation type="unfinished">Kopiyruj wielość bajtōw</translation>
     </message>
     <message>
-        <source>Copy dust</source>
-        <translation type="unfinished">Kopiyruj sztaub</translation>
-    </message>
-    <message>
         <source>Copy change</source>
         <translation type="unfinished">Kopiyruj wydŏwkã</translation>
     </message>
     <message>
         <source>(%1 locked)</source>
         <translation type="unfinished">(%1 zaszperowane)</translation>
-    </message>
-    <message>
-        <source>yes</source>
-        <translation type="unfinished">ja</translation>
-    </message>
-    <message>
-        <source>no</source>
-        <translation type="unfinished">niy</translation>
-    </message>
-    <message>
-        <source>This label turns red if any recipient receives an amount smaller than the current dust threshold.</source>
-        <translation type="unfinished">Ta etyketa stŏwŏ sie czyrwōnŏ jeźli keryś z ôdbiyrŏczy dostŏwŏ kwotã myńszõ aniżeli terŏźny prōg sztaubu.</translation>
     </message>
     <message>
         <source>Can vary +/- %1 satoshi(s) per input.</source>
@@ -649,13 +669,6 @@
         <translation type="unfinished">(wydŏwka)</translation>
     </message>
 </context>
-<context>
-    <name>OpenWalletActivity</name>
-    <message>
-        <source>default wallet</source>
-        <translation type="unfinished">wychodny portmanyj</translation>
-    </message>
-    </context>
 <context>
     <name>CreateWalletDialog</name>
     <message>
@@ -956,14 +969,6 @@
     <message>
         <source>&amp;Spend unconfirmed change</source>
         <translation type="unfinished">&amp;Wydej niyprzituplowanõ wydŏwkã</translation>
-    </message>
-    <message>
-        <source>Automatically open the Bitcoin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
-        <translation type="unfinished">Autōmatycznie ôdewrzij port klijynta Bitcoin na routerze. Ta ôpcyjŏ funguje ino jeźli twōj router podpiyrŏ UPnP i je ôno zapuszczone.</translation>
-    </message>
-    <message>
-        <source>Map port using &amp;UPnP</source>
-        <translation type="unfinished">Mapuj port przi używaniu &amp;UPnP</translation>
     </message>
     <message>
         <source>Accept connections from outside.</source>
@@ -1361,10 +1366,6 @@
         <translation type="unfinished">Włŏsne:</translation>
     </message>
     <message>
-        <source>Dust:</source>
-        <translation type="unfinished">Sztaub:</translation>
-    </message>
-    <message>
         <source>Balance:</source>
         <translation type="unfinished">Saldo:</translation>
     </message>
@@ -1387,10 +1388,6 @@
     <message>
         <source>Copy bytes</source>
         <translation type="unfinished">Kopiyruj wielość bajtōw</translation>
-    </message>
-    <message>
-        <source>Copy dust</source>
-        <translation type="unfinished">Kopiyruj sztaub</translation>
     </message>
     <message>
         <source>Copy change</source>
@@ -1557,10 +1554,6 @@
         <translation type="unfinished">Ôdebrane ôd</translation>
     </message>
     <message>
-        <source>Payment to yourself</source>
-        <translation type="unfinished">Płat do siebie</translation>
-    </message>
-    <message>
         <source>(no label)</source>
         <translation type="unfinished">(chyba etykety)</translation>
     </message>
@@ -1633,11 +1626,7 @@
         <source>New fee:</source>
         <translation type="unfinished">Nowŏ ôpłŏcka:</translation>
     </message>
-    <message>
-        <source>default wallet</source>
-        <translation type="unfinished">wychodny portmanyj</translation>
-    </message>
-</context>
+    </context>
 <context>
     <name>WalletView</name>
     <message>

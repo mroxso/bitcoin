@@ -10,13 +10,7 @@ A transaction ("replacement transaction") may replace its directly conflicting t
 their in-mempool descendants (together, "original transactions") if, in addition to passing all
 other consensus and policy rules, each of the following conditions are met:
 
-1. The directly conflicting transactions all signal replaceability explicitly. A transaction is
-   signaling replaceability if any of its inputs have an nSequence number less than (0xffffffff - 1).
-
-   *Rationale*: See [BIP125
-   explanation](https://github.com/bitcoin/bips/blob/master/bip-0125.mediawiki#motivation).
-   Use the (`-mempoolfullrbf`) configuration option to allow transaction replacement without enforcement of the
-   opt-in signaling rule.
+1. (Removed)
 
 2. The replacement transaction only include an unconfirmed input if that input was included in
    one of the directly conflicting transactions. An unconfirmed input spends an output from a
@@ -38,8 +32,8 @@ other consensus and policy rules, each of the following conditions are met:
 4. The additional fees (difference between absolute fee paid by the replacement transaction and the
    sum paid by the original transactions) pays for the replacement transaction's bandwidth at or
    above the rate set by the node's incremental relay feerate. For example, if the incremental relay
-   feerate is 1 satoshi/vB and the replacement transaction is 500 virtual bytes total, then the
-   replacement pays a fee at least 500 satoshis higher than the sum of the original transactions.
+   feerate is 0.1 satoshi/vB and the replacement transaction is 500 virtual bytes total, then the
+   replacement pays a fee at least 50 satoshis higher than the sum of the original transactions.
 
    *Rationale*: Try to prevent DoS attacks where an attacker causes the network to repeatedly relay
    transactions each paying a tiny additional amount in fees, e.g. just 1 satoshi.
@@ -79,3 +73,9 @@ This set of rules is similar but distinct from BIP125.
 
 * Full replace-by-fee enabled as a configurable mempool policy as of **v24.0** ([PR
   #25353](https://github.com/bitcoin/bitcoin/pull/25353)).
+
+* Full replace-by-fee is the default policy as of **v28.0** ([PR #30493](https://github.com/bitcoin/bitcoin/pull/30493)).
+
+* Signaling for replace-by-fee is no longer required as of [PR 30592](https://github.com/bitcoin/bitcoin/pull/30592).
+
+* The incremental relay feerate default is 0.1sat/vB ([PR #33106](https://github.com/bitcoin/bitcoin/pull/33106)).

@@ -26,7 +26,7 @@ static_assert(MAX_PACKAGE_WEIGHT >= MAX_STANDARD_TX_WEIGHT);
 
 // If a package is to be evaluated, it must be at least as large as the mempool's ancestor/descendant limits,
 // otherwise transactions that would be individually accepted may be rejected in a package erroneously.
-// Since a submitted package must be child-with-unconfirmed-parents (all of the transactions are an ancestor
+// Since a submitted package must be child-with-parents (all of the transactions are a parent
 // of the child), package limits are ultimately bounded by mempool package limits. Ensure that the
 // defaults reflect this constraint.
 static_assert(DEFAULT_DESCENDANT_LIMIT >= MAX_PACKAGE_COUNT);
@@ -88,4 +88,10 @@ bool IsChildWithParents(const Package& package);
  * other (the package is a "tree").
  */
 bool IsChildWithParentsTree(const Package& package);
+
+/** Get the hash of the concatenated wtxids of transactions, with wtxids
+ * treated as a little-endian numbers and sorted in ascending numeric order.
+ */
+uint256 GetPackageHash(const std::vector<CTransactionRef>& transactions);
+
 #endif // BITCOIN_POLICY_PACKAGES_H

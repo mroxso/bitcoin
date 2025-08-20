@@ -12,9 +12,9 @@
 #include <test/util/setup_common.h>
 #include <util/strencodings.h>
 #include <util/translation.h>
-#include <version.h>
 
 #include <string>
+#include <numeric>
 
 #include <boost/test/unit_test.hpp>
 
@@ -151,7 +151,6 @@ BOOST_AUTO_TEST_CASE(embedded_test)
 
 BOOST_AUTO_TEST_CASE(subnet_test)
 {
-
     BOOST_CHECK(LookupSubNet("1.2.3.0/24") == LookupSubNet("1.2.3.0/255.255.255.0"));
     BOOST_CHECK(LookupSubNet("1.2.3.0/24") != LookupSubNet("1.2.4.0/255.255.255.0"));
     BOOST_CHECK(LookupSubNet("1.2.3.0/24").Match(ResolveIP("1.2.3.4")));
@@ -186,6 +185,7 @@ BOOST_AUTO_TEST_CASE(subnet_test)
     // Check valid/invalid
     BOOST_CHECK(LookupSubNet("1.2.3.0/0").IsValid());
     BOOST_CHECK(!LookupSubNet("1.2.3.0/-1").IsValid());
+    BOOST_CHECK(!LookupSubNet("1.2.3.0/+24").IsValid());
     BOOST_CHECK(LookupSubNet("1.2.3.0/32").IsValid());
     BOOST_CHECK(!LookupSubNet("1.2.3.0/33").IsValid());
     BOOST_CHECK(!LookupSubNet("1.2.3.0/300").IsValid());
@@ -367,6 +367,7 @@ BOOST_AUTO_TEST_CASE(netpermissions_test)
     bilingual_str error;
     NetWhitebindPermissions whitebindPermissions;
     NetWhitelistPermissions whitelistPermissions;
+    ConnectionDirection connection_direction;
 
     // Detect invalid white bind
     BOOST_CHECK(!NetWhitebindPermissions::TryParse("", whitebindPermissions, error));
@@ -436,24 +437,33 @@ BOOST_AUTO_TEST_CASE(netpermissions_test)
     BOOST_CHECK(NetWhitebindPermissions::TryParse(",,@1.2.3.4:32", whitebindPermissions, error));
     BOOST_CHECK_EQUAL(whitebindPermissions.m_flags, NetPermissionFlags::None);
 
+    BOOST_CHECK(!NetWhitebindPermissions::TryParse("out,forcerelay@1.2.3.4:32", whitebindPermissions, error));
+    BOOST_CHECK(error.original.find("whitebind may only be used for incoming connections (\"out\" was passed)") != std::string::npos);
+
     // Detect invalid flag
     BOOST_CHECK(!NetWhitebindPermissions::TryParse("bloom,forcerelay,oopsie@1.2.3.4:32", whitebindPermissions, error));
     BOOST_CHECK(error.original.find("Invalid P2P permission") != std::string::npos);
 
     // Check netmask error
-    BOOST_CHECK(!NetWhitelistPermissions::TryParse("bloom,forcerelay,noban@1.2.3.4:32", whitelistPermissions, error));
+    BOOST_CHECK(!NetWhitelistPermissions::TryParse("bloom,forcerelay,noban@1.2.3.4:32", whitelistPermissions, connection_direction, error));
     BOOST_CHECK(error.original.find("Invalid netmask specified in -whitelist") != std::string::npos);
 
     // Happy path for whitelist parsing
-    BOOST_CHECK(NetWhitelistPermissions::TryParse("noban@1.2.3.4", whitelistPermissions, error));
+    BOOST_CHECK(NetWhitelistPermissions::TryParse("noban@1.2.3.4", whitelistPermissions, connection_direction, error));
     BOOST_CHECK_EQUAL(whitelistPermissions.m_flags, NetPermissionFlags::NoBan);
     BOOST_CHECK(NetPermissions::HasFlag(whitelistPermissions.m_flags, NetPermissionFlags::NoBan));
 
-    BOOST_CHECK(NetWhitelistPermissions::TryParse("bloom,forcerelay,noban,relay@1.2.3.4/32", whitelistPermissions, error));
+    BOOST_CHECK(NetWhitelistPermissions::TryParse("bloom,forcerelay,noban,relay@1.2.3.4/32", whitelistPermissions, connection_direction, error));
     BOOST_CHECK_EQUAL(whitelistPermissions.m_flags, NetPermissionFlags::BloomFilter | NetPermissionFlags::ForceRelay | NetPermissionFlags::NoBan | NetPermissionFlags::Relay);
     BOOST_CHECK(error.empty());
     BOOST_CHECK_EQUAL(whitelistPermissions.m_subnet.ToString(), "1.2.3.4/32");
-    BOOST_CHECK(NetWhitelistPermissions::TryParse("bloom,forcerelay,noban,relay,mempool@1.2.3.4/32", whitelistPermissions, error));
+    BOOST_CHECK(NetWhitelistPermissions::TryParse("bloom,forcerelay,noban,relay,mempool@1.2.3.4/32", whitelistPermissions, connection_direction, error));
+    BOOST_CHECK(NetWhitelistPermissions::TryParse("in,relay@1.2.3.4", whitelistPermissions, connection_direction, error));
+    BOOST_CHECK_EQUAL(connection_direction, ConnectionDirection::In);
+    BOOST_CHECK(NetWhitelistPermissions::TryParse("out,bloom@1.2.3.4", whitelistPermissions, connection_direction, error));
+    BOOST_CHECK_EQUAL(connection_direction, ConnectionDirection::Out);
+    BOOST_CHECK(NetWhitelistPermissions::TryParse("in,out,bloom@1.2.3.4", whitelistPermissions, connection_direction, error));
+    BOOST_CHECK_EQUAL(connection_direction, ConnectionDirection::Both);
 
     const auto strings = NetPermissions::ToStrings(NetPermissionFlags::All);
     BOOST_CHECK_EQUAL(strings.size(), 7U);
@@ -594,14 +604,10 @@ BOOST_AUTO_TEST_CASE(isbadport)
     BOOST_CHECK(!IsBadPort(443));
     BOOST_CHECK(!IsBadPort(8333));
 
-    // Check all ports, there must be 80 bad ports in total.
-    size_t total_bad_ports{0};
-    for (uint16_t port = std::numeric_limits<uint16_t>::max(); port > 0; --port) {
-        if (IsBadPort(port)) {
-            ++total_bad_ports;
-        }
-    }
-    BOOST_CHECK_EQUAL(total_bad_ports, 80);
+    // Check all possible ports and ensure we only flag the expected amount as bad
+    std::list<int> ports(std::numeric_limits<uint16_t>::max());
+    std::iota(ports.begin(), ports.end(), 1);
+    BOOST_CHECK_EQUAL(std::ranges::count_if(ports, IsBadPort), 85);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
